@@ -133,3 +133,5 @@ dmypy.json
 *.pkl
 *.numbers
 *.txt
+data/*
+notebooks/*
