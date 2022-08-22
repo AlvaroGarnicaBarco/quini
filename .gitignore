@@ -132,3 +132,4 @@ dmypy.json
 .idea
 *.pkl
 *.numbers
+*.txt
