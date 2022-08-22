@@ -1,8 +1,6 @@
-import pandas as pd
 import numpy as np
 
-import itertools
-from itertools import product, combinations
+from itertools import combinations
 
 
 def PoiBi(p, k):
