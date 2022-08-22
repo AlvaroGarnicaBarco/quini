@@ -1,10 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from py.variables import *
 
 
-def horarios():
+# TODO: function to scrap recaudacion and jornada, para la temporada meterla como variable global en config? settings?
+
+def horarios(jornada_actual):
     """
     función que scrapea los horarios de la jornada
     """
@@ -13,7 +14,7 @@ def horarios():
 
     if soup.find('h3',
                  class_='c-boleto-multiples-caja-base-header__container__jornada ng-star-inserted').text.strip().replace(
-            ' ', '_').lower() != jornada_actual:
+        ' ', '_').lower() != jornada_actual:
         return 'Jornada que se está intentando generar no corresponde a la jornada actual'
 
     else:
@@ -31,16 +32,17 @@ def horarios():
         return pd.DataFrame({'horario': horario}, index=partido)
 
 
-def reales_estimados():
+def reales_estimados(jornada_actual):
     """
     función que scrapea probs reales y estimadas 
+    :param jornada_actual:
     """
     respuesta = requests.get('https://www.eduardolosilla.es/')
     soup = BeautifulSoup(respuesta.content, 'html.parser')
 
     if soup.find('h3',
                  class_='c-boleto-multiples-caja-base-header__container__jornada ng-star-inserted').text.strip().replace(
-            ' ', '_').lower() != jornada_actual:
+        ' ', '_').lower() != jornada_actual:
         return 'Jornada que se está intentando sacar horarios generando no corresponde a la jornada actual'
 
     else:
@@ -57,19 +59,19 @@ def reales_estimados():
                 for i in prob:
                     d["contador_{}".format(idx)].append(int(i.text))
 
-        EL = {}
-        LAE = {}
+        edu_los = {}
+        lae = {}
         reales = {}
 
         for idx, i in enumerate(('1', 'X', '2')):
-            EL[i] = d["contador_{}".format(0)][idx::3]
-            LAE[i] = d["contador_{}".format(1)][idx::3]
+            edu_los[i] = d["contador_{}".format(0)][idx::3]
+            lae[i] = d["contador_{}".format(1)][idx::3]
             reales[i] = d["contador_{}".format(2)][idx::3]
 
-        EL = pd.DataFrame(EL, index=horarios().index)
-        LAE = pd.DataFrame(LAE, index=horarios().index)
-        reales = pd.DataFrame(reales, index=horarios().index) / 100
-        estimados = round((EL * 0.3 + LAE * 0.7) / 100, 2)
+        edu_los = pd.DataFrame(edu_los, index=horarios(jornada_actual).index)
+        lae = pd.DataFrame(lae, index=horarios(jornada_actual).index)
+        reales = pd.DataFrame(reales, index=horarios(jornada_actual).index) / 100
+        estimados = round((edu_los * 0.3 + lae * 0.7) / 100, 2)
         rentabilidad = (reales / estimados).round(2)
         return reales, estimados, rentabilidad
 
@@ -78,7 +80,7 @@ def premios(jornada):
     """
     función que scrapea los premios de la jornada
     """
-    respuesta = requests.get('https://resultados.as.com/quiniela/2020_2021/{}/'.format(jornada))
+    respuesta = requests.get(f'https://resultados.as.com/quiniela/2022_2023/{jornada}/')
     soup = BeautifulSoup(respuesta.content, 'html.parser')
 
     categorias = soup.find_all(class_='row-table-datos')
