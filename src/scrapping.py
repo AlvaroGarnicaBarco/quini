@@ -72,8 +72,8 @@ def reales_estimados(jornada_actual):
         lae = pd.DataFrame(lae, index=horarios(jornada_actual).index)
         reales = pd.DataFrame(reales, index=horarios(jornada_actual).index) / 100
         estimados = round((edu_los * 0.3 + lae * 0.7) / 100, 2)
-        rentabilidad = (reales / estimados).round(2)
-        return reales, estimados, rentabilidad
+
+        return reales, estimados
 
 
 def premios(jornada):
