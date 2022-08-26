@@ -4,7 +4,13 @@ from src.my_functions import jugadas_con_premio
 
 
 def construccion_probabilidades(reales: pd.DataFrame, estimados: pd.DataFrame) -> pd.DataFrame:
+    """
+    construye el df de probabilidades por jugada dado los datos reales y estimados
 
+    :param reales: pd.DataFrame con las probabilidades reales scrapeadas en reales_estimados()
+    :param estimados: pd.DataFrame con las probabilidades estimadas scrapeadas en reales_estimados()
+    :return: pd.Dataframe con las probabilidades reales y estimados para cada una de las 3**14 jugadas
+    """
     jugadas = [' '.join(i) for i in product("1X2", repeat=14)]
 
     # Probabilidad de 10, 11, 12, 13 y 14 según estimados
@@ -80,6 +86,7 @@ def construccion_probabilidades(reales: pd.DataFrame, estimados: pd.DataFrame) -
 def feature_engineering(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
     """
     Añade al df variables de ranking, acertantes esperados y premios esperados
+
     :param df: pd.DataFrame que debe contener las probs obtenidas de construccion_probabilidades()
     :param recaudacion: recaudacion predicha en €
     :return: df con nuevas variables
@@ -117,11 +124,13 @@ def feature_engineering(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
 def calculo_esperanza(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
     """
     Añade al df variables de ranking, acertantes esperados y premios esperados
+
     :param df: pd.DataFrame que debe contener las variables obtenidas de feature_engineering()
     :param recaudacion: recaudacion predicha en €
     :return: df con nuevas variables
     """
     # Esperanza premio 13, 12
+    print('Calculando EM13, EM12...')
     df['premio_esperado13_conmigo'] = recaudacion*0.075 / (df['acertantes_esperados13']+1)
     df['probreal14_x_premio_esperado13'] = df.prob_real14 * df.premio_esperado13_conmigo
 
@@ -138,6 +147,7 @@ def calculo_esperanza(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
     df['rank_EM12'] = df['EM12'].rank(method='first', ascending=False).astype(int)
 
     # Esperanza premio 14
+    print('Calculando EM13, EM12...')
     df['EM14'] = df['prob_real14'] * ((recaudacion*0.16)/ (((recaudacion/0.75)*df['prob_est14'])+1))
     df['rank_EM14'] = df['EM14'].rank(method='first', ascending=False).astype(int)
     df.sort_values('EM14', ascending=False, inplace=True)
@@ -154,22 +164,3 @@ def calculo_esperanza(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
              'premio_esperado12_conmigo', 'probreal14_x_premio_esperado12'], axis=1, inplace=True)
 
     return df
-
-
-if __name__ == "__main__":
-    import time
-    from src.scrapping import reales_estimados
-
-    reales, estimados = reales_estimados("jornada_3")
-
-    start_time = time.time()
-    df = construccion_probabilidades(reales, estimados)
-    print(f'construccion_probabilidades ejecutado en {round((time.time() - start_time)/60, 2)} min')
-
-    start_time = time.time()
-    df_ = feature_engineering(df, 2600000)
-    print(f'feature_engineering ejecutado en {round((time.time() - start_time)/60, 2)} min')
-
-    start_time = time.time()
-    df_ = calculo_esperanza(df_, 2600000)
-    print(f'calculo_esperanza ejecutado en {round((time.time() - start_time)/60, 2)} min')
