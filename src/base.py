@@ -130,24 +130,24 @@ def calculo_esperanza(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
     :return: df con nuevas variables
     """
     # Esperanza premio 13, 12
-    print('Calculando EM13, EM12...')
+    print('Calculando EM13...')
     df['premio_esperado13_conmigo'] = recaudacion*0.075 / (df['acertantes_esperados13']+1)
     df['probreal14_x_premio_esperado13'] = df.prob_real14 * df.premio_esperado13_conmigo
 
-    df['premio_esperado12_conmigo'] = recaudacion*0.075 / (df['acertantes_esperados12']+1)
-    df['probreal14_x_premio_esperado12'] = df.prob_real14 * df.premio_esperado12_conmigo
+    # df['premio_esperado12_conmigo'] = recaudacion*0.075 / (df['acertantes_esperados12']+1)
+    # df['probreal14_x_premio_esperado12'] = df.prob_real14 * df.premio_esperado12_conmigo
 
-    dict_ = df[['Jugada', 'probreal14_x_premio_esperado13', 'probreal14_x_premio_esperado12']].set_index('Jugada').to_dict()
+    dict_ = df[['Jugada', 'probreal14_x_premio_esperado13']].set_index('Jugada').to_dict()  # ,'probreal14_x_premio_esperado12'
     em13 = [sum({jugada_: dict_['probreal14_x_premio_esperado13'][jugada_] for jugada_ in jugadas_con_premio(jugada, 13)}.values()) for jugada in df.Jugada]
-    em12 = [sum({jugada_: dict_['probreal14_x_premio_esperado12'][jugada_] for jugada_ in jugadas_con_premio(jugada, 12)}.values()) for jugada in df.Jugada]
+    # em12 = [sum({jugada_: dict_['probreal14_x_premio_esperado12'][jugada_] for jugada_ in jugadas_con_premio(jugada, 12)}.values()) for jugada in df.Jugada]
 
     df['EM13'] = em13
     df['rank_EM13'] = df['EM13'].rank(method='first', ascending=False).astype(int)
-    df['EM12'] = em12
-    df['rank_EM12'] = df['EM12'].rank(method='first', ascending=False).astype(int)
+    # df['EM12'] = em12
+    # df['rank_EM12'] = df['EM12'].rank(method='first', ascending=False).astype(int)
 
     # Esperanza premio 14
-    print('Calculando EM13, EM12...')
+    print('Calculando EM14...')
     df['EM14'] = df['prob_real14'] * ((recaudacion*0.16)/ (((recaudacion/0.75)*df['prob_est14'])+1))
     df['rank_EM14'] = df['EM14'].rank(method='first', ascending=False).astype(int)
     df.sort_values('EM14', ascending=False, inplace=True)
@@ -157,10 +157,10 @@ def calculo_esperanza(df: pd.DataFrame, recaudacion) -> pd.DataFrame:
     df['rank_EM1413'] = df['EM1413'].rank(method='first', ascending=False).astype(int)
 
     # Esperanza premio 14+13+12
-    df['EM'] = df['EM14'] + df['EM13'] + df['EM12']
-    df['rank_EM'] = df['EM'].rank(method='first', ascending=False).astype(int)
+    # df['EM'] = df['EM14'] + df['EM13'] + df['EM12']
+    # df['rank_EM'] = df['EM'].rank(method='first', ascending=False).astype(int)
 
     df.drop(['premio_esperado13_conmigo', 'probreal14_x_premio_esperado13',
-             'premio_esperado12_conmigo', 'probreal14_x_premio_esperado12'], axis=1, inplace=True)
+             ], axis=1, inplace=True)  # 'premio_esperado12_conmigo', 'probreal14_x_premio_esperado12'
 
     return df
