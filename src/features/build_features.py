@@ -1,6 +1,6 @@
 import pandas as pd
 from itertools import product, combinations
-from src.my_functions import jugadas_con_premio
+from src.utils import jugadas_con_premio
 
 
 def construccion_probabilidades(reales: pd.DataFrame, estimados: pd.DataFrame) -> pd.DataFrame:
