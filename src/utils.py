@@ -156,6 +156,49 @@ def jugadas_peñas(df: pd.DataFrame, path_to_jugadas: str, n_jornada: str, año:
     return df
 
 
+def aciertos_jugada(jugada: str, resultados: dict) -> int:
+    """
+    calcula el máximo numero de aciertos posibles de una jugada dado el filtro/resultado de signos
+    Args:
+        jugada: e.g. '1 1 X X 2 X 1 1 1 X 2 X X 2'
+        resultados: tiene que tener el formato siguiente, e.g. {'partido1': ['1', 'X'], 'partido2': ['2'], str....}
+
+    Returns:
+        número de aciertos
+    """
+    aciertos = 0
+
+    for signo, posibles_resultados in zip(jugada.replace(' ', ''), resultados.values()):
+        if signo in posibles_resultados:
+            aciertos += 1
+
+    return aciertos
+
+
+def aciertos_mis_jugadas(jugadas: list[str], resultados: dict) -> dict:
+    """
+    calculo el numero de aciertos posibles de 10 o màs de un conjunto de jugadas
+    Args:
+        jugadas: lista de jugadas
+        resultados: tiene que tener el formato siguiente, e.g. {'partido1': ['1', 'X'], 'partido2': ['2'], str....}
+
+    Returns:
+        dict con los aciertos de posibles
+    """
+    aciertos_dict = {14: 0,
+                     13: 0,
+                     12: 0,
+                     11: 0,
+                     10: 0}
+
+    for jugada in jugadas:
+        aciertos = aciertos_jugada(jugada, resultados)
+        if aciertos >= 10:
+            aciertos_dict[aciertos] += 1
+
+    return aciertos_dict
+
+
 # TODO: funcion que coge un df cualqiera lo abre en un gui y el user puede cambiarlo manualmente (lo que hago con estimados)
 def manually_update(df: pd.DataFrame) -> pd.DataFrame:
     pass
