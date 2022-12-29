@@ -156,19 +156,25 @@ def jugadas_peñas(df: pd.DataFrame, path_to_jugadas: str, n_jornada: str, año:
     return df
 
 
-def aciertos_jugada(jugada: str, resultados: dict) -> int:
+def aciertos_jugada(jugada: str, resultados: dict | str) -> int:
     """
     calcula el máximo numero de aciertos posibles de una jugada dado el filtro/resultado de signos
     Args:
         jugada: e.g. '1 1 X X 2 X 1 1 1 X 2 X X 2'
         resultados: tiene que tener el formato siguiente, e.g. {'partido1': ['1', 'X'], 'partido2': ['2'], str....}
+        o una str como '1 1 2 2 2 X 1 X 1 1 X 2 X 2'
 
     Returns:
         número de aciertos
     """
     aciertos = 0
+    
+    if isinstance(resultados, dict):
+        resultados = resultados.values()
+    elif isinstance(resultados, str):
+        resultados = resultados.replace(' ', '')
 
-    for signo, posibles_resultados in zip(jugada.replace(' ', ''), resultados.values()):
+    for signo, posibles_resultados in zip(jugada.replace(' ', ''), resultados):
         if signo in posibles_resultados:
             aciertos += 1
 
