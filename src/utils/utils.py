@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import numpy as np
+from itertools import combinations
 
 
 def number_of_matching_characters(str1, str2):
@@ -208,3 +209,22 @@ def aciertos_mis_jugadas(jugadas: list[str], resultados: dict) -> dict:
 # TODO: funcion que coge un df cualqiera lo abre en un gui y el user puede cambiarlo manualmente (lo que hago con estimados)
 def manually_update(df: pd.DataFrame) -> pd.DataFrame:
     pass
+
+
+def PoiBi(p, k):
+    """
+    función para el calculo de Poisson Binomial dado unas probabilidades y un numero de aciertos
+    """
+
+    if k < 0 or k > len(p):
+        return print('Wrong k value given')
+    if any((i < 0 or i > 1) for i in p):
+        return print('Wrong p value given')
+
+    prob = 0
+    for index_variantes in combinations(range(len(p)), len(p) - k):
+        no_variantes = [x for i, x in enumerate(p) if i not in index_variantes]
+        variantes = [round(1 - x, 10) for i, x in enumerate(p) if i in index_variantes]
+        prob += np.prod(no_variantes + variantes)
+
+    return round(prob, 10)
