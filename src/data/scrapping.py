@@ -1,6 +1,11 @@
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+import time
 
 
 # TODO: function to scrap recaudacion and jornada, para la temporada meterla como variable global en config? settings?
@@ -13,8 +18,8 @@ def horarios(jornada_actual):
     soup = BeautifulSoup(respuesta.content, 'html.parser')
 
     if soup.find('h3',
-                 class_='c-boleto-multiples-caja-base-header__container__jornada ng-star-inserted').text.strip().replace(
-        ' ', '_').lower() != jornada_actual:
+                 class_='c-boleto-multiples-caja-base-header__container__jornada ng-star-inserted').text.strip().replace(' ', '_').lower()\
+            != jornada_actual:
         return 'Jornada que se está intentando generar no corresponde a la jornada actual'
 
     else:
@@ -41,8 +46,8 @@ def reales_estimados(jornada_actual):
     soup = BeautifulSoup(respuesta.content, 'html.parser')
 
     if soup.find('h3',
-                 class_='c-boleto-multiples-caja-base-header__container__jornada ng-star-inserted').text.strip().replace(
-        ' ', '_').lower() != jornada_actual:
+                 class_='c-boleto-multiples-caja-base-header__container__jornada ng-star-inserted').text.strip().replace(' ', '_').lower() \
+            != jornada_actual:
         return 'Jornada que se está intentando sacar horarios generando no corresponde a la jornada actual'
 
     else:
@@ -76,18 +81,72 @@ def reales_estimados(jornada_actual):
         return reales, estimados
 
 
-def premios(jornada):
+class EscrutinioScraper:
     """
-    función que scrapea los premios de la jornada
+    objeto para escrapear el escrutinio
     """
-    respuesta = requests.get(f'https://resultados.as.com/quiniela/2022_2023/{jornada}/')
-    soup = BeautifulSoup(respuesta.content, 'html.parser')
+    def __init__(self, driver_path='/Users/Alvaro/Documents/Drivers/chromedriver'):
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        self.driver = webdriver.Chrome(service=Service(driver_path), options=options)
+        self.driver.get('https://www.eduardolosilla.es/quiniela/ayudas/escrutinio')
+        time.sleep(1)
 
-    categorias = soup.find_all(class_='row-table-datos')
+    def cambiar_jornada(self, jornada: int, temporada: str = '22/23') -> None:  # poner la temporada de config
+        """
+        cambia la jornada y/o la temporada de la tabla de escrutinio
+        Args:
+            jornada: jornada de la que se quieren los datos
+            temporada: temproada de la que se quieren los datos, por defecto es la temporada actual
 
-    premio = []
-    for i in categorias[:6]:
-        # acertantes.append(i.find(class_='c-marcador-horario__time__hour').text.strip()
-        premio.append(i.find(class_='s-tright').text.strip())
+        Returns:
+            None, cambia el filtro de la tabla de escrutinio
+        """
+        filtros = self.driver.find_elements(By.TAG_NAME, 'app-selector')
+        jornadas = filtros[0]
+        temporadas = filtros[1]
 
-    return pd.DataFrame({'aciertos': list(reversed(range(10, 16))), 'premio (€)': premio})
+        try:
+            jornadas.find_element(By.XPATH, f"//option[@title='QUINIELA JORNADA {jornada}']").click()
+            time.sleep(0.5)
+        except NoSuchElementException:
+            raise Exception(f'La jornada {jornada} no existe')
+
+        try:
+            temporadas.find_element(By.XPATH, f"//option[@title='TEMPORADA {temporada}']").click()
+            time.sleep(0.5)
+        except NoSuchElementException:
+            raise Exception(f'La temporada {temporada} no existe')
+
+    def extraer_datos(self) -> (float, float, dict, dict):
+        """
+        scrapea los datos del escrutinio (recaudacion, bote, acertantes y premios)
+
+        Returns:
+            datos del escrutinio
+        """
+        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        base = soup.find('app-tabla-categorias')
+
+        # recaudacion
+        recaudacion = base.find('span', {'class': 'c-tabla-categorias__recaudacion__price'}).text
+        recaudacion = float(recaudacion[:-2].replace('.', '').replace(',', '.'))
+
+        # bote
+        bote = base.find('span', {'class': 'c-tabla-categorias__bote__price'}).text
+        bote = float(bote[:-2].replace('.', '').replace(',', '.'))
+
+        # escrutinio
+        tabla = base.find('table', {'class': 'c-tabla-categorias__table'})
+
+        acertantes = tabla.find_all('td', {'class': 'c-tabla-categorias__table__category__acertantes'})
+        acertantes = {15 - i: int(acertantes_categoria.text.replace('.', '')) for i, acertantes_categoria in enumerate(acertantes[:-1])}
+
+        premios = tabla.find_all('td', {'class': 'c-tabla-categorias__table__category__premio'})
+        premios = {15 - i: float(premio_categoria.text[:-2].replace('.', '').replace(',', '.')) for i, premio_categoria in
+                   enumerate(premios[:-1])}
+
+        return recaudacion, bote, acertantes, premios
+
+    def quit(self):
+        self.driver.quit()
