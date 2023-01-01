@@ -117,13 +117,22 @@ class EscrutinioScraper:
         except NoSuchElementException:
             raise Exception(f'La temporada {temporada} no existe')
 
-    def extraer_datos(self) -> (float, float, dict, dict):
-        """
-        scrapea los datos del escrutinio (recaudacion, bote, acertantes y premios)
+        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        base = soup.find('app-tabla-categorias')
+        if base.find('p', {'class': 'c-tabla-categorias__recaudacion'}).find('span', {'class': 'ng-star-inserted'}) is not None:
+            raise Exception(f'La jornada que se ha seleccionado aún no ha empezado')
 
-        Returns:
-            escrutinio
-        """
+    def extraer_resultado(self) -> str:
+        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        base = soup.find('app-caja-base')
+        resultado_list = [signo.text for signo in base.find_all('button', {'class': ['u-pronostico m-resultado',
+                                                                                     'u-pronostico m-resultado ng-star-inserted']})]
+        resultado = ' '.join(resultado_list[:14])
+        pleno15 = ''.join(resultado_list[14:])
+
+        return resultado, pleno15
+
+    def extraer_recaudacion_bote(self) -> (float, float):
         soup = BeautifulSoup(self.driver.page_source, 'html.parser')
         base = soup.find('app-tabla-categorias')
 
@@ -133,10 +142,19 @@ class EscrutinioScraper:
 
         # bote
         bote = base.find('span', {'class': 'c-tabla-categorias__bote__price'}).text
-        try:
-            bote = float(bote[:-2].replace('.', '').replace(',', '.'))
-        except ValueError:
-            raise Exception(f'La jornada que se ha seleccionado aún no ha empezado')
+        bote = float(bote[:-2].replace('.', '').replace(',', '.'))
+
+        return recaudacion, bote
+
+    def extraer_escrutinio(self) -> (float, float, dict, dict):
+        """
+        scrapea los datos del escrutinio (recaudacion, bote, acertantes y premios)
+
+        Returns:
+            escrutinio
+        """
+        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        base = soup.find('app-tabla-categorias')
 
         # escrutinio
         tabla = base.find('table', {'class': 'c-tabla-categorias__table'})
@@ -150,13 +168,13 @@ class EscrutinioScraper:
         premios = {15 - i: float(premio_categoria.text[:-2].replace('.', '').replace(',', '.')) for i, premio_categoria in
                    enumerate(premios[:6])}
 
-        return recaudacion, bote, acertantes, premios
+        return acertantes, premios
 
     def quit(self):
         self.driver.quit()
 
 
-def get_escrutinio(jornada: int, temporada: str = '22/23') -> (float, float, dict, dict):
+def get_escrutinio(jornada: int, temporada: str = '22/23') -> (dict, dict):
     """
     scrapea los datos del escrutinio dado una jornada y una temporada
     Args:
@@ -164,14 +182,56 @@ def get_escrutinio(jornada: int, temporada: str = '22/23') -> (float, float, dic
         temporada: temporada de la que se quieren los datos, por defecto es la temporada actual
 
     Returns:
-        escrutinio
+        escrutinio de la jornada seleccionada
     """
     my_scraper = EscrutinioScraper()
     try:
         my_scraper.cambiar_jornada(jornada, temporada)
     except StaleElementReferenceException:  # a veces lo tengo que ejecutar 2 veces para que funcione
         my_scraper.cambiar_jornada(jornada, temporada)
-    recaudacion, bote, acertantes, premios = my_scraper.extraer_datos()
+    acertantes, premios = my_scraper.extraer_escrutinio()
     my_scraper.quit()
 
-    return recaudacion, bote, acertantes, premios
+    return acertantes, premios
+
+
+def get_resultado(jornada: int, temporada: str = '22/23') -> str:
+    """
+    scrapea los datos del escrutinio dado una jornada y una temporada
+    Args:
+        jornada: jornada de la que se quieren los datos
+        temporada: temporada de la que se quieren los datos, por defecto es la temporada actual
+
+    Returns:
+        resultado de la jornada seleccionada
+    """
+    my_scraper = EscrutinioScraper()
+    try:
+        my_scraper.cambiar_jornada(jornada, temporada)
+    except StaleElementReferenceException:  # a veces lo tengo que ejecutar 2 veces para que funcione
+        my_scraper.cambiar_jornada(jornada, temporada)
+    resultado = my_scraper.extraer_resultado()
+    my_scraper.quit()
+
+    return resultado
+
+
+def get_recaudacion_bote(jornada: int, temporada: str = '22/23') -> (float, float):
+    """
+    scrapea los datos del escrutinio dado una jornada y una temporada
+    Args:
+        jornada: jornada de la que se quieren los datos
+        temporada: temporada de la que se quieren los datos, por defecto es la temporada actual
+
+    Returns:
+        recaudacion y bote de la jornada seleccionada
+    """
+    my_scraper = EscrutinioScraper()
+    try:
+        my_scraper.cambiar_jornada(jornada, temporada)
+    except StaleElementReferenceException:  # a veces lo tengo que ejecutar 2 veces para que funcione
+        my_scraper.cambiar_jornada(jornada, temporada)
+    recaudacion, bote = my_scraper.extraer_recaudacion_bote()
+    my_scraper.quit()
+
+    return recaudacion, bote
