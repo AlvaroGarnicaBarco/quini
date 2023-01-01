@@ -6,9 +6,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 import time
+import warnings
 
-
-# TODO: function to scrap recaudacion and jornada, para la temporada meterla como variable global en config? settings?
 
 def horarios(jornada_actual):
     """
@@ -97,7 +96,7 @@ class EscrutinioScraper:
         cambia la jornada y/o la temporada de la tabla de escrutinio
         Args:
             jornada: jornada de la que se quieren los datos
-            temporada: temproada de la que se quieren los datos, por defecto es la temporada actual
+            temporada: temporada de la que se quieren los datos, por defecto es la temporada actual
 
         Returns:
             None, cambia el filtro de la tabla de escrutinio
@@ -123,7 +122,7 @@ class EscrutinioScraper:
         scrapea los datos del escrutinio (recaudacion, bote, acertantes y premios)
 
         Returns:
-            datos del escrutinio
+            escrutinio
         """
         soup = BeautifulSoup(self.driver.page_source, 'html.parser')
         base = soup.find('app-tabla-categorias')
@@ -134,19 +133,45 @@ class EscrutinioScraper:
 
         # bote
         bote = base.find('span', {'class': 'c-tabla-categorias__bote__price'}).text
-        bote = float(bote[:-2].replace('.', '').replace(',', '.'))
+        try:
+            bote = float(bote[:-2].replace('.', '').replace(',', '.'))
+        except ValueError:
+            raise Exception(f'La jornada que se ha seleccionado aún no ha empezado')
 
         # escrutinio
         tabla = base.find('table', {'class': 'c-tabla-categorias__table'})
 
         acertantes = tabla.find_all('td', {'class': 'c-tabla-categorias__table__category__acertantes'})
-        acertantes = {15 - i: int(acertantes_categoria.text.replace('.', '')) for i, acertantes_categoria in enumerate(acertantes[:-1])}
+        acertantes = {15 - i: int(acertantes_categoria.text.replace('.', '')) for i, acertantes_categoria in enumerate(acertantes[:6])}
+        if acertantes[10] == 0:
+            warnings.warn("¡Cuidado! La jornada que ha seleccionado aún no ha acabado")
 
         premios = tabla.find_all('td', {'class': 'c-tabla-categorias__table__category__premio'})
         premios = {15 - i: float(premio_categoria.text[:-2].replace('.', '').replace(',', '.')) for i, premio_categoria in
-                   enumerate(premios[:-1])}
+                   enumerate(premios[:6])}
 
         return recaudacion, bote, acertantes, premios
 
     def quit(self):
         self.driver.quit()
+
+
+def get_escrutinio(jornada: int, temporada: str = '22/23') -> (float, float, dict, dict):
+    """
+    scrapea los datos del escrutinio dado una jornada y una temporada
+    Args:
+        jornada: jornada de la que se quieren los datos
+        temporada: temporada de la que se quieren los datos, por defecto es la temporada actual
+
+    Returns:
+        escrutinio
+    """
+    my_scraper = EscrutinioScraper()
+    try:
+        my_scraper.cambiar_jornada(jornada, temporada)
+    except StaleElementReferenceException:  # a veces lo tengo que ejecutar 2 veces para que funcione
+        my_scraper.cambiar_jornada(jornada, temporada)
+    recaudacion, bote, acertantes, premios = my_scraper.extraer_datos()
+    my_scraper.quit()
+
+    return recaudacion, bote, acertantes, premios
