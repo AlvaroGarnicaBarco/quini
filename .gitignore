@@ -132,6 +132,5 @@ dmypy.json
 .idea
 *.pkl
 *.numbers
-*.txt
 data/*
 old/*
