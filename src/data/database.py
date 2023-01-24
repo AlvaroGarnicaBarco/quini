@@ -2,18 +2,20 @@ import psycopg2
 
 
 class Database:
-    def __init__(self, host, database, user, password):
-        self.host = host
-        self.database = database
+    def __init__(self, dbname, user, password, host, port):
+        self.dbname = dbname
         self.user = user
         self.password = password
+        self.host = host
+        self.port = port
 
     def __enter__(self):
         self.connection = psycopg2.connect(
-            host=self.host,
-            database=self.database,
+            dbname=self.dbname,
             user=self.user,
-            password=self.password
+            password=self.password,
+            host=self.host,
+            port=self.port
         )
         self.cursor = self.connection.cursor()
         return self
@@ -29,8 +31,9 @@ class Database:
         self.cursor.execute(query)
         return self.cursor.fetchall()
 
-    def insert(self, table, values):
-        query = f"INSERT INTO {table} VALUES {values}"
+    def insert(self, table: str, values: dict):
+        keys = f"({', '.join(tuple(values.keys()))})"
+        query = f"INSERT INTO {table} {keys} VALUES {tuple(values.values())}"
         self.cursor.execute(query)
         self.connection.commit()
 
@@ -46,9 +49,8 @@ class Database:
 
 
 if __name__ == "__main__":
-    with Database(host='localhost', database='mydb', user='myuser', password='mypassword') as db:
-        db.insert('users', "(1, 'John', 'Doe', 'johndoe@example.com')")
-        users = db.select('users')
-        for user_ in users:
-            print(user_)
-
+    with Database(dbname='quiniela', user='postgres', password='!', host='localhost', port=5433) as db:
+        my_dict = {'username': 'kdkdkddk', 'password': 'uyuy'}
+        db.insert('test2', my_dict)
+        users = db.select('test2')
+        print(users)
