@@ -49,8 +49,19 @@ class Database:
 
 
 if __name__ == "__main__":
-    with Database(dbname='quiniela', user='postgres', password='!', host='localhost', port=5433) as db:
-        my_dict = {'username': 'kdkdkddk', 'password': 'uyuy'}
+    from dotenv import load_dotenv
+    load_dotenv()
+    import os
+    db_name = os.getenv("DB_NAME")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_host = os.getenv("DB_HOST")
+    db_port = os.getenv("DB_PORT")
+
+    with Database(dbname=db_name, user=db_user, password=db_password, host=db_host, port=db_port) as db:
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        my_dict = {'username': 'yoooo', 'password': 'uyuy', 'fecha_calculo': timestamp}
         db.insert('test2', my_dict)
         users = db.select('test2')
         print(users)
