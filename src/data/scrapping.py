@@ -72,9 +72,11 @@ def reales_estimados(jornada_actual):
             lae[i] = d["contador_{}".format(1)][idx::3]
             reales[i] = d["contador_{}".format(2)][idx::3]
 
-        edu_los = pd.DataFrame(edu_los, index=horarios(jornada_actual).index)
-        lae = pd.DataFrame(lae, index=horarios(jornada_actual).index)
-        reales = pd.DataFrame(reales, index=horarios(jornada_actual).index) / 100
+        _horarios = horarios(jornada_actual)
+
+        edu_los = pd.DataFrame(edu_los, index=_horarios.index)
+        lae = pd.DataFrame(lae, index=_horarios.index)
+        reales = pd.DataFrame(reales, index=_horarios.index) / 100
         estimados = round((edu_los * 0.4 + lae * 0.6) / 100, 3)
 
         return reales, estimados
