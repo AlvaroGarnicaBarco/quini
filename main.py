@@ -11,11 +11,8 @@ def main(jornada: str, recaudacion: float):
     :param recaudacion: recaudacion estimada en €
     :return: None, se guardan datos de reales, estimados y df
     """
-    # update_jornada_table(jornada, recaudacion)
-
     print('Scrapeando tablas de reales y estimados...')
     reales, estimados = reales_estimados(jornada)
-    # update_partido_table(reales, estimados)
     print('% reales: \n')
     print(reales)
     print('% estimados: \n')
@@ -40,5 +37,4 @@ def main(jornada: str, recaudacion: float):
 
 
 if __name__ == "__main__":
-    main("jornada_42", 3_000_000)  # TODO: hacerlo parametrizable (__main__.py/run.py?, yaml?), cada vez que quiero ejecutar una joranda
-    # cambiar esto
+    main("jornada_43", 3_600_000)  # TODO: hacerlo parametrizable (__main__.py/run.py?, yaml?), cada vez que quiero ejecutar una joranda
