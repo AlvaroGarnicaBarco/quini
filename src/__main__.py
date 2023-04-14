@@ -37,4 +37,9 @@ def main(jornada: str, recaudacion: float):
 
 
 if __name__ == "__main__":
-    main("jornada_50", 2_600_000)  # TODO: hacerlo parametrizable (__main__.py/run.py?, yaml?), cada vez que quiero ejecutar una joranda
+    print('\n_____Quiniela_____')
+    print('jornada: ')
+    jornada = input()
+    print('recaudacion: ')
+    recaudacion = int(input())
+    main(jornada, recaudacion)
