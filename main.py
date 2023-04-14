@@ -37,4 +37,4 @@ def main(jornada: str, recaudacion: float):
 
 
 if __name__ == "__main__":
-    main("jornada_43", 3_600_000)  # TODO: hacerlo parametrizable (__main__.py/run.py?, yaml?), cada vez que quiero ejecutar una joranda
+    main("jornada_50", 2_600_000)  # TODO: hacerlo parametrizable (__main__.py/run.py?, yaml?), cada vez que quiero ejecutar una joranda
