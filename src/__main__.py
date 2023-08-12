@@ -31,9 +31,9 @@ def main(jornada: str, recaudacion: float):
     print(f'calculo_esperanza ejecutado en {round((time.time() - start_time)/60, 2)} min')
 
     print('Guardando datos...')
-    reales.to_csv(f'/Users/Alvaro/Desktop/Quiniela/data/reales/22-23/reales_{jornada}')
-    estimados.to_csv(f'/Users/Alvaro/Desktop/Quiniela/data/estimados/22-23/estimados_{jornada}')
-    df.to_pickle(f'/Users/Alvaro/Desktop/Quiniela/data/dfs/22-23/df_{jornada}.pkl')
+    reales.to_csv(f'/Users/Alvaro/Desktop/Quiniela/data/reales/23-24/reales_{jornada}')
+    estimados.to_csv(f'/Users/Alvaro/Desktop/Quiniela/data/estimados/23-24/estimados_{jornada}')
+    df.to_pickle(f'/Users/Alvaro/Desktop/Quiniela/data/dfs/23-24/df_{jornada}.pkl')
 
 
 if __name__ == "__main__":
@@ -42,4 +42,5 @@ if __name__ == "__main__":
     jornada = input()
     print('recaudacion: ')
     recaudacion = int(input())
+    print('\n')
     main(jornada, recaudacion)
